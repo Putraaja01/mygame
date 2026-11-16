@@ -4,7 +4,7 @@ import '../data/library_repository.dart';
 import '../models/user.dart';
 import '../theme.dart';
 
-/// Hanya developer. Membuat akun member atau reseller (masing-masing hanya boleh satu).
+/// Hanya developer. Membuat akun member, VIP, atau reseller tanpa batas jumlah.
 class KelolaAkunScreen extends StatefulWidget {
   final LibraryRepository repo;
   const KelolaAkunScreen({super.key, required this.repo});
@@ -17,7 +17,7 @@ class _KelolaAkunScreenState extends State<KelolaAkunScreen> {
   final _formKey = GlobalKey<FormState>();
   final _username = TextEditingController();
   final _password = TextEditingController();
-  static const _roles = [UserRole.member, UserRole.reseller];
+  static const _roles = [UserRole.member, UserRole.vip, UserRole.reseller];
   UserRole? _role;
 
   @override
@@ -72,11 +72,9 @@ class _KelolaAkunScreenState extends State<KelolaAkunScreen> {
               for (final role in _roles)
                 _RoleOption(
                   label: role.label,
-                  available: widget.repo.isRoleAvailable(role),
+                  available: true,
                   selected: _role == role,
-                  onTap: widget.repo.isRoleAvailable(role)
-                      ? () => setState(() => _role = role)
-                      : null,
+                  onTap: () => setState(() => _role = role),
                 ),
               const SizedBox(height: 20),
               TextFormField(

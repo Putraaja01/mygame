@@ -52,7 +52,7 @@ class _IntroVideoScreenState extends State<IntroVideoScreen> {
                 child: introVideoPath.isEmpty
                     ? const Text('Video pembuka belum diatur',
                         style: TextStyle(color: MarsColors.muted))
-                    : VideoBox(path: introVideoPath, onCompleted: _enter),
+                    : VideoBox(path: introVideoPath, aspectRatio: 9 / 16, onCompleted: _enter),
               ),
             ),
           ],

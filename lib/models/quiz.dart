@@ -12,10 +12,14 @@ class QuizGame {
   final String description;
   final List<QuizQuestion> questions;
 
+  /// Koin yang didapat setiap jawaban benar di game ini.
+  final int coinPerCorrect;
+
   const QuizGame({
     required this.id,
     required this.title,
     required this.description,
     required this.questions,
+    this.coinPerCorrect = 5,
   });
 }

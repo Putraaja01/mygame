@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 
+import '../data/library_repository.dart';
 import '../models/quiz.dart';
+import '../models/user.dart';
 import '../theme.dart';
 
 class QuizPlayScreen extends StatefulWidget {
   final QuizGame game;
-  const QuizPlayScreen({super.key, required this.game});
+  final LibraryRepository repo;
+  const QuizPlayScreen({super.key, required this.game, required this.repo});
 
   @override
   State<QuizPlayScreen> createState() => _QuizPlayScreenState();
@@ -15,9 +18,13 @@ class _QuizPlayScreenState extends State<QuizPlayScreen> {
   final _controller = TextEditingController();
   int _index = 0;
   int _score = 0;
+  int _coinsEarned = 0;
   bool _checked = false;
   bool _correct = false;
+  bool _hintVisible = false;
+  bool _busy = false;
 
+  AppUser get _user => widget.repo.currentUser!;
   List<QuizQuestion> get _questions => widget.game.questions;
   QuizQuestion get _current => _questions[_index];
   bool get _finished => _index >= _questions.length;
@@ -25,32 +32,70 @@ class _QuizPlayScreenState extends State<QuizPlayScreen> {
   /// Membandingkan jawaban tanpa spasi, tanda baca, dan perbedaan huruf besar-kecil.
   String _normalize(String s) => s.toUpperCase().replaceAll(RegExp(r'[^A-Z0-9]'), '');
 
-  void _check() {
-    if (_checked) return;
+  void _snack(String msg) =>
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+
+  Future<void> _check() async {
+    if (_checked || _busy) return;
     final input = _controller.text.trim();
     if (input.isEmpty) return;
+    _busy = true;
+    final correct = _normalize(input) == _normalize(_current.answer);
+    if (correct) {
+      await widget.repo.addCoins(_user, widget.game.coinPerCorrect);
+    }
+    if (!mounted) return;
     setState(() {
       _checked = true;
-      _correct = _normalize(input) == _normalize(_current.answer);
-      if (_correct) _score++;
+      _correct = correct;
+      if (correct) {
+        _score++;
+        _coinsEarned += widget.game.coinPerCorrect;
+      }
     });
+    _busy = false;
   }
 
-  void _next() {
+  void _goNext() {
     setState(() {
       _index++;
       _checked = false;
       _correct = false;
+      _hintVisible = false;
       _controller.clear();
     });
+  }
+
+  Future<void> _useHint() async {
+    if (_hintVisible || _checked) return;
+    final ok = await widget.repo.useItem(_user, 'hint');
+    if (!mounted) return;
+    if (!ok) {
+      _snack('Kamu belum punya Petunjuk. Beli di Shop.');
+      return;
+    }
+    setState(() => _hintVisible = true);
+  }
+
+  Future<void> _useSkip() async {
+    if (_checked) return;
+    final ok = await widget.repo.useItem(_user, 'skip');
+    if (!mounted) return;
+    if (!ok) {
+      _snack('Kamu belum punya Lewati Soal. Beli di Shop.');
+      return;
+    }
+    _goNext();
   }
 
   void _restart() {
     setState(() {
       _index = 0;
       _score = 0;
+      _coinsEarned = 0;
       _checked = false;
       _correct = false;
+      _hintVisible = false;
       _controller.clear();
     });
   }
@@ -59,6 +104,12 @@ class _QuizPlayScreenState extends State<QuizPlayScreen> {
   void dispose() {
     _controller.dispose();
     super.dispose();
+  }
+
+  String _hintText() {
+    final answer = _current.answer.trim();
+    if (answer.isEmpty) return '';
+    return answer[0].toUpperCase();
   }
 
   @override
@@ -75,6 +126,9 @@ class _QuizPlayScreenState extends State<QuizPlayScreen> {
   }
 
   Widget _buildQuestion() {
+    final hintCount = widget.repo.itemCount(_user, 'hint');
+    final skipCount = widget.repo.itemCount(_user, 'skip');
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -89,9 +143,16 @@ class _QuizPlayScreenState extends State<QuizPlayScreen> {
             const Spacer(),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: comicBox(color: MarsColors.card, shadow: 3),
+              child: Text('KOIN ${widget.repo.coinsOf(_user)}',
+                  style: comicStyle(fontSize: 16, color: MarsColors.ink)),
+            ),
+            const SizedBox(width: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: comicBox(color: MarsColors.blue, shadow: 3),
               child: Text('SKOR $_score',
-                  style: comicStyle(fontSize: 18, color: Colors.white)),
+                  style: comicStyle(fontSize: 16, color: Colors.white)),
             ),
           ],
         ),
@@ -118,6 +179,12 @@ class _QuizPlayScreenState extends State<QuizPlayScreen> {
                     style: const TextStyle(
                         fontSize: 20, height: 1.5, fontWeight: FontWeight.w800),
                   ),
+                  if (_hintVisible) ...[
+                    const SizedBox(height: 14),
+                    Text('Huruf pertama: ${_hintText()}',
+                        textAlign: TextAlign.center,
+                        style: comicStyle(fontSize: 18, color: MarsColors.blue)),
+                  ],
                 ],
               ),
             ),
@@ -132,13 +199,36 @@ class _QuizPlayScreenState extends State<QuizPlayScreen> {
               shadow: 3,
             ),
             child: Text(
-              _correct ? 'BENAR!' : 'JAWABAN: ${_current.answer.trim()}',
+              _correct
+                  ? 'BENAR! +${widget.game.coinPerCorrect} KOIN'
+                  : 'JAWABAN: ${_current.answer.trim()}',
               textAlign: TextAlign.center,
               style: comicStyle(
-                fontSize: 22,
+                fontSize: 20,
                 color: _correct ? MarsColors.ink : Colors.white,
               ),
             ),
+          ),
+        const SizedBox(height: 12),
+        if (!_checked)
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: _hintVisible ? null : _useHint,
+                  style: _itemStyle(),
+                  child: Text('PETUNJUK ($hintCount)'),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: _useSkip,
+                  style: _itemStyle(),
+                  child: Text('LEWATI ($skipCount)'),
+                ),
+              ),
+            ],
           ),
         const SizedBox(height: 12),
         TextField(
@@ -147,11 +237,11 @@ class _QuizPlayScreenState extends State<QuizPlayScreen> {
           textCapitalization: TextCapitalization.characters,
           style: const TextStyle(fontWeight: FontWeight.w700),
           decoration: const InputDecoration(labelText: 'Jawabanmu'),
-          onSubmitted: (_) => _checked ? _next() : _check(),
+          onSubmitted: (_) => _checked ? _goNext() : _check(),
         ),
         const SizedBox(height: 16),
         FilledButton(
-          onPressed: _checked ? _next : _check,
+          onPressed: _checked ? _goNext : _check,
           child: Padding(
             padding: const EdgeInsets.symmetric(vertical: 12),
             child: Text(_checked ? 'LANJUT!' : 'PERIKSA'),
@@ -160,6 +250,12 @@ class _QuizPlayScreenState extends State<QuizPlayScreen> {
       ],
     );
   }
+
+  ButtonStyle _itemStyle() => OutlinedButton.styleFrom(
+        foregroundColor: MarsColors.ink,
+        side: const BorderSide(color: MarsColors.ink, width: 3),
+        padding: const EdgeInsets.symmetric(vertical: 12),
+      );
 
   Widget _buildResult() {
     return Center(
@@ -170,10 +266,14 @@ class _QuizPlayScreenState extends State<QuizPlayScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text('PERMAINAN SELESAI!',
-                style: comicStyle(fontSize: 32, color: MarsColors.ink)),
+                textAlign: TextAlign.center,
+                style: comicStyle(fontSize: 30, color: MarsColors.ink)),
             const SizedBox(height: 10),
             Text('SKOR $_score DARI ${_questions.length}',
                 style: comicStyle(fontSize: 22, color: MarsColors.accent)),
+            const SizedBox(height: 6),
+            Text('KOIN DIDAPAT: $_coinsEarned',
+                style: comicStyle(fontSize: 18, color: MarsColors.ink)),
             const SizedBox(height: 24),
             FilledButton(onPressed: _restart, child: const Text('MAIN LAGI')),
             const SizedBox(height: 10),

@@ -1,4 +1,4 @@
-/// Item yang dijual di tab Shop. Harga hanya tampil di Shop.
+/// Item yang dijual di tab Shop dengan koin. Harga hanya tampil di Shop.
 class ShopItem {
   final String id;
   final String name;

@@ -45,6 +45,7 @@ ThemeData marsTheme() {
   final ink = MarsColors.ink;
 
   return base.copyWith(
+    fontFamily: 'Body',
     scaffoldBackgroundColor: MarsColors.bg,
     colorScheme: const ColorScheme.light(
       primary: MarsColors.accent,

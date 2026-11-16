@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 
 import '../data/library_repository.dart';
 import '../models/user.dart';
+import '../services/music.dart';
 import '../theme.dart';
 import 'kelola_akun_screen.dart';
 import 'login_screen.dart';
+import 'tiktok_screen.dart';
 
 class AkunScreen extends StatelessWidget {
   final LibraryRepository repo;
@@ -12,6 +14,7 @@ class AkunScreen extends StatelessWidget {
 
   void _logout(BuildContext context) {
     repo.logout();
+    Music.stop();
     Navigator.of(context).pushAndRemoveUntil(
       MaterialPageRoute(builder: (_) => LoginScreen(repo: repo)),
       (_) => false,
@@ -22,6 +25,7 @@ class AkunScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final user = repo.currentUser!;
     final isDev = user.role == UserRole.developer;
+    final remaining = repo.remainingDownloads(user);
 
     return SafeArea(
       child: Padding(
@@ -52,6 +56,11 @@ class AkunScreen extends StatelessWidget {
                         Text(user.role.label.toUpperCase(),
                             style: const TextStyle(
                                 fontSize: 12, fontWeight: FontWeight.w900, color: MarsColors.ink)),
+                        if (remaining >= 0)
+                          Text(
+                            'Sisa download hari ini: $remaining / ${LibraryRepository.dailyMemberLimit}',
+                            style: const TextStyle(fontSize: 12, color: MarsColors.ink),
+                          ),
                       ],
                     ),
                   ),
@@ -59,15 +68,26 @@ class AkunScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 16),
-            if (isDev)
+            if (user.role.isVipOrAbove)
+              _MenuTile(
+                icon: Icons.download,
+                title: 'TIKTOK DOWNLOADER',
+                subtitle: 'Khusus VIP ke atas',
+                onTap: () => Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => TikTokScreen(repo: repo)),
+                ),
+              ),
+            if (isDev) ...[
+              const SizedBox(height: 10),
               _MenuTile(
                 icon: Icons.group,
                 title: 'KELOLA AKUN',
-                subtitle: 'Buat akun member dan reseller',
+                subtitle: 'Buat akun member, VIP, dan reseller',
                 onTap: () => Navigator.of(context).push(
                   MaterialPageRoute(builder: (_) => KelolaAkunScreen(repo: repo)),
                 ),
               ),
+            ],
             const Spacer(),
             OutlinedButton.icon(
               onPressed: () => _logout(context),

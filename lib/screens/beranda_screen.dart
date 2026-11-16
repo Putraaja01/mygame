@@ -29,7 +29,7 @@ class _BerandaScreenState extends State<BerandaScreen> {
 
   void _play(QuizGame game) {
     Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => QuizPlayScreen(game: game)),
+      MaterialPageRoute(builder: (_) => QuizPlayScreen(game: game, repo: widget.repo)),
     );
   }
 

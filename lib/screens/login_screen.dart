@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../data/library_repository.dart';
+import '../services/music.dart';
 import '../theme.dart';
 import 'intro_video_screen.dart';
 import 'register_screen.dart';
@@ -31,6 +32,7 @@ class _LoginScreenState extends State<LoginScreen> {
     if (!_formKey.currentState!.validate()) return;
     try {
       widget.repo.login(username: _username.text, password: _password.text);
+      Music.play();
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(builder: (_) => IntroVideoScreen(repo: widget.repo)),
       );

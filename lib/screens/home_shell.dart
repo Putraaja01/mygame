@@ -21,7 +21,7 @@ class _HomeShellState extends State<HomeShell> {
   Widget build(BuildContext context) {
     final pages = [
       BerandaScreen(repo: widget.repo),
-      const ShopScreen(),
+      ShopScreen(repo: widget.repo),
       AkunScreen(repo: widget.repo),
     ];
 

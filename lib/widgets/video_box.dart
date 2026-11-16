@@ -8,6 +8,7 @@ class VideoBox extends StatefulWidget {
   final String path;
   final bool loop;
   final bool muted;
+  final double aspectRatio;
   final VoidCallback? onCompleted;
 
   const VideoBox({
@@ -15,6 +16,7 @@ class VideoBox extends StatefulWidget {
     required this.path,
     this.loop = false,
     this.muted = false,
+    this.aspectRatio = 16 / 9,
     this.onCompleted,
   });
 
@@ -65,7 +67,7 @@ class _VideoBoxState extends State<VideoBox> {
   @override
   Widget build(BuildContext context) {
     return AspectRatio(
-      aspectRatio: 16 / 9,
+      aspectRatio: widget.aspectRatio,
       child: ColoredBox(
         color: MarsColors.card,
         child: _ready

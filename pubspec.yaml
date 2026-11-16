@@ -12,6 +12,7 @@ dependencies:
   shared_preferences: ^2.2.2
   crypto: ^3.0.3
   video_player: ^2.9.2
+  audioplayers: ^6.1.0
 
 dev_dependencies:
   flutter_test:
@@ -25,14 +26,7 @@ flutter:
     - assets/icon/
     - assets/videos/
     - assets/fonts/
-
-flutter_launcher_icons:
-  android: true
-  ios: false
-  image_path: 'assets/icon/app_icon.png'
-  adaptive_icon_background: '#C9B27E'
-  adaptive_icon_foreground: 'assets/icon/app_icon.png'
-
+    - assets/music/
   fonts:
     - family: Display
       fonts:
@@ -43,3 +37,10 @@ flutter_launcher_icons:
           weight: 400
         - asset: assets/fonts/Body-Bold.ttf
           weight: 700
+
+flutter_launcher_icons:
+  android: true
+  ios: false
+  image_path: 'assets/icon/app_icon.png'
+  adaptive_icon_background: '#C9B27E'
+  adaptive_icon_foreground: 'assets/icon/app_icon.png'
