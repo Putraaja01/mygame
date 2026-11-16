@@ -1,0 +1,45 @@
+name: game_library
+description: Mars Projek - aplikasi game komik (offline).
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  shared_preferences: ^2.2.2
+  crypto: ^3.0.3
+  video_player: ^2.9.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+  flutter_launcher_icons: ^0.14.1
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/icon/
+    - assets/videos/
+    - assets/fonts/
+
+flutter_launcher_icons:
+  android: true
+  ios: false
+  image_path: 'assets/icon/app_icon.png'
+  adaptive_icon_background: '#C9B27E'
+  adaptive_icon_foreground: 'assets/icon/app_icon.png'
+
+  fonts:
+    - family: Display
+      fonts:
+        - asset: assets/fonts/Display.ttf
+    - family: Body
+      fonts:
+        - asset: assets/fonts/Body-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/Body-Bold.ttf
+          weight: 700
